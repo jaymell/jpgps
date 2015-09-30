@@ -30,12 +30,12 @@ google maps: 33 2.3577N,97 12.10327 W
 
 
 #files=[f for f in listdir(path) if isfile(join(path,f))]
-gps_tags=['GPS GPSLongitude','GPS GPSLatitude','GPS GPSLatitudeRef','GPS GPSAltitudeRef','GPS GPSDate','GPS GPSTimeStamp','GPS GPSLongitudeRef','GPS GPSAltitude']
+#gps_tags=['GPS GPSLongitude','GPS GPSLatitude','GPS GPSLatitudeRef','GPS GPSAltitudeRef','GPS GPSDate','GPS GPSTimeStamp','GPS GPSLongitudeRef','GPS GPSAltitude']
 
 def usage():
 	print("\n\nUsage: %s <-p|-a|-i|-c|-d> <file name>\n" % sys.argv[0]) 
 	print("\t-p:\tprint tag names")
-	print("\t-a:\tprint ALL photo tags (with a couple exceptions")
+	print("\t-a:\tprint ALL photo tags (with a couple exceptions)")
 	print("\t-i:\tis photo geo-tagged? If so, print file name and \"Yes\"")
 	print("\t-c:\tprint COORDINATES of photo")
 	print("\t-d:\tprint DATE of photo\n\n")
@@ -48,35 +48,39 @@ except getopt.GetoptError as err:
 	print(str(err))
 	usage()
 	sys.exit(2)
-for o, a in opts:
-	if o in ["-p", "--print"]:
-		fi=a
-		fi = jpgps.jpgps(fi)
-		fi.print_tag_names()
-		sys.exit()	
-	if o in ["-a", "--all"]:
-		fi=a
-		fi = jpgps.jpgps(fi)
-		fi.read_all_tags()
-		sys.exit()
-	if o in ["-i", "--is_tagged"]:
-		fi=a
-		if jpgps.is_gps_tagged(fi):
-			print("%s Yes" % fi)
-		sys.exit()
-	if o in ["-c", "--cord"]:
-		fi=a
-		fi = jpgps.jpgps(fi)
-		print(fi.return_coords())
-		sys.exit()
-	if o in ["-d", "--date"]:
-		fi=a
-		fi = jpgps.jpgps(fi)
-		print(fi.parse_date())
-		sys.exit()
-	else:
-		usage()
-		sys.exit(2)
+else:
+	for o, a in opts:
+		if o in ["-p", "--print"]:
+			fi=a
+			fi = jpgps.Jpgps(fi)
+			fi.print_tag_names()
+			sys.exit()	
+		if o in ["-a", "--all"]:
+			fi=a
+			fi = jpgps.Jpgps(fi)
+			fi.read_all_tags()
+			sys.exit()
+		if o in ["-i", "--is_tagged"]:
+			fi=a
+			fi = jpgps.Jpgps(fi)
+			if fi.is_gps_tagged():
+				print("%s Yes" % fi)
+			else: 
+				print("%s No" % fi)
+			sys.exit()
+		if o in ["-c", "--cord"]:
+			fi=a
+			fi = jpgps.Jpgps(fi)
+			print(fi.return_coords())
+			sys.exit()
+		if o in ["-d", "--date"]:
+			fi=a
+			fi = jpgps.Jpgps(fi)
+			print(fi.return_date())
+			sys.exit()
+		else:
+			usage()
+			sys.exit(2)
 
 # if no options passed:
 usage()

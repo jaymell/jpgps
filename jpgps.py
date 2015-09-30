@@ -11,30 +11,36 @@ import sys
 import getopt
 import datetime
 
-gps_tags = [ 	'GPS GPSLongitude'	,
-		'GPS GPSLatitude'	,
-		'GPS GPSLatitudeRef'	,
-		'GPS GPSAltitudeRef'	,
-		'GPS GPSLongitudeRef'	,
-		'GPS GPSAltitude' ]
+class Jpgps:
+	""" takes a jpg filname and creates Jpgps object for easy access of GPS 
+		data on file; file doesn't have to actually be GPS-tagged, as 
+		it still may be useful to access some of the metadata, eg date,
+		even in absence of GPS data  -- use Jpgps.is_gps_tagged for checking """
 
-def is_gps_tagged(fi):
-        match=0
-        g=open(fi,'rb')
-        tags = exifread.process_file(g)
-        for tag in tags.keys():
-                if tag in gps_tags:
-                        match=1
-                        return True
-        if match == 0:
-                return False
+	gps_tags = [ 	'GPS GPSLongitude'	,
+			'GPS GPSLatitude'	,
+			'GPS GPSLatitudeRef'	,
+			'GPS GPSAltitudeRef'	,
+			'GPS GPSLongitudeRef'	,
+			'GPS GPSAltitude' ]
 
-class jpgps:
 	def __init__(self, fi):
 		self.image = fi
-		self.latitude = self.return_coords()[0]	
-		self.longitude = self.return_coords()[1]
-		self.date = self.parse_date()
+		self.date = self.return_date()
+		if self.is_gps_tagged():
+			self.latitude, self.longitude = self.return_coords()	
+
+	def __str__(self):
+		return self.image
+
+	def is_gps_tagged(self):
+		match=0
+		g=open(self.image,'rb')
+		tags = exifread.process_file(g)
+		if all(k in tags for k in self.gps_tags):
+			return True
+		else: 	
+			return False
 
 	def return_coords(self):
 		g = open(self.image,'rb')
@@ -74,7 +80,7 @@ class jpgps:
 
 		return(lat_decimal,long_decimal)
 
-	def parse_date(self):
+	def return_date(self):
 	        g=open(self.image,'rb')
 		tags = exifread.process_file(g)
 		raw_date=tags['EXIF DateTimeOriginal']
@@ -87,7 +93,7 @@ class jpgps:
 		g=open(self.image,'rb')
 		tags = exifread.process_file(g)
 		for tag in tags.keys():
-		    if tag in gps_tags:
+		    if tag in self.gps_tags:
 			print "Key: %s, value %s" % (tag, tags[tag])
 	
 	def read_all_tags(self):
@@ -96,6 +102,4 @@ class jpgps:
 		for tag in tags:
 			if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
 				print("Key: %s, value %s" % (tag, tags[tag]))
-
-	
 
