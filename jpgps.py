@@ -1,7 +1,3 @@
-"""
-James's JPG GPS Module
-"""
-
 import exifread
 from os import listdir
 from os.path import isfile, join
@@ -10,6 +6,11 @@ import os
 import sys
 import getopt
 import datetime
+import re
+
+""" convert date and gps data from exif meta in jpegs to something
+	useable -- good reference for the fields:
+	http://www.opanda.com/en/pe/help/gps.html """
 
 class Jpgps:
 	""" takes a jpg filname and creates Jpgps object for easy access of GPS 
@@ -22,84 +23,99 @@ class Jpgps:
 			'GPS GPSLatitudeRef'	,
 			'GPS GPSAltitudeRef'	,
 			'GPS GPSLongitudeRef'	,
-			'GPS GPSAltitude' ]
+			'GPS GPSAltitude' 	,
+		   ]
 
 	def __init__(self, fi):
-		self.image = fi
-		self.date = self.return_date()
-		if self.is_gps_tagged():
-			self.latitude, self.longitude = self.return_coords()	
+		try:
+			with open(fi, 'rb') as f:
+				self.image = fi
+				self.tags = exifread.process_file(f)		
+				self.latitude = None
+				self.longitude = None
+				self.altitude = None
+				self.date = self._return_date()
+				if self.is_gps_tagged():
+					self.latitude, self.longitude = self._return_coords()	
+					self.altitude = self._return_altitude()
+		except Exception as e:
+			print('Failed to open file: %s: %s' % (fi,e))
+			
 
 	def __str__(self):
 		return self.image
 
 	def is_gps_tagged(self):
 		match=0
-		g=open(self.image,'rb')
-		tags = exifread.process_file(g)
-		if all(k in tags for k in self.gps_tags):
+		if all(k in self.tags for k in self.gps_tags):
 			return True
 		else: 	
 			return False
 
-	def return_coords(self):
-		g = open(self.image,'rb')
-		tags = exifread.process_file(g)
-		long_degrees = tags['GPS GPSLongitude'].values[0]
-		long_minutes = tags['GPS GPSLongitude'].values[1]
-		# separate numerator and divisor of the seconds for division:
-		# for whatever reason, have to convert all to floats for division:
-		long_seconds_num,long_seconds_div = str(tags['GPS GPSLongitude'].values[2]).split('/')
-		long_seconds = float(float(long_seconds_num)/float(long_seconds_div))
-		long_cardinal = tags['GPS GPSLongitudeRef'].values
-		lat_degrees = tags['GPS GPSLatitude'].values[0]
-		lat_minutes = tags['GPS GPSLatitude'].values[1]
-
-		# do same math on latitude minutes as on longitude:
-		lat_seconds_num,lat_seconds_div = str(tags['GPS GPSLatitude'].values[2]).split('/')
-		lat_seconds = float(float(lat_seconds_num)/float(lat_seconds_div))
-		lat_cardinal = tags['GPS GPSLatitudeRef'].values
-
-		# degrees, minutes, seconds:    
-		coords = [lat_degrees,lat_minutes,lat_seconds,lat_cardinal,long_degrees,long_minutes,long_seconds,long_cardinal]
-
-		# convert to decimal:
-		# have to first convert values to strings, then to integers/floats:
-		lat_degrees = int(str(lat_degrees))
-		lat_minutes = int(str(lat_minutes))
-		lat_seconds = float(str(lat_seconds))
-		long_degrees = int(str(long_degrees))
-		long_minutes = int(str(long_minutes))
-		long_seconds = float(str(long_seconds))
-
-		# do final math to convert to decimal and append cardinal direction:
-		# not passing cardinal directions: this will cause problems for cross-hemispheric 
-		# comparisons but for now makes the math easier:
-		lat_decimal = lat_degrees + lat_minutes/float(60) + lat_seconds/float(3600)
-		long_decimal = long_degrees + long_minutes/float(60) + long_seconds/float(3600)
-
-		return(lat_decimal,long_decimal)
-
-	def return_date(self):
-	        g=open(self.image,'rb')
-		tags = exifread.process_file(g)
-		raw_date=tags['EXIF DateTimeOriginal']
-		year,month,day=str(raw_date).split(' ')[0].split(':')[:]
-		hour,minute,second=str(raw_date).split(' ')[1].split(':')[:]
-		date=datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
-		return(date)
-
-	def print_tag_names(self,):
-		g=open(self.image,'rb')
-		tags = exifread.process_file(g)
-		for tag in tags.keys():
+	def print_gps_tags(self):
+		for tag in self.tags.keys():
 		    if tag in self.gps_tags:
-			print "Key: %s, value %s" % (tag, tags[tag])
+			print "Key: %s, value %s" % (tag, self.tags[tag])
 	
-	def read_all_tags(self):
-		g=open(self.image,'rb')
-		tags = exifread.process_file(g)
-		for tag in tags:
+	def print_all_tags(self):
+		for tag in self.tags:
 			if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
-				print("Key: %s, value %s" % (tag, tags[tag]))
+				print("Key: %s, value %s" % (tag, self.tags[tag]))
+
+	def _return_coords(self):
+		""" strip out latitude, longitude info and return... data is stored
+			in degree/minute/second/cardinal direction format, convert to
+			+/- decimal degrees --- data type of dict values requires first
+			converting to string, then numeric"""
+
+		def convert_to_decimal(data, cardinal):
+			""" takes the latitude/longitude data and associated cardinal
+				direction and returns decimal W and S values considered
+				negative """
+			# degrees and minutes are integers:
+			degrees, minutes = [ float(str(i)) for i in data.values[:2] ]
+			seconds = self._standardize_num(data.values[2])
+			"""
+			seconds_num, seconds_div = [ float(str(i)) for i in str(data.values[2]).split('/') ]
+			seconds = float(seconds_num/seconds_div)
+			"""
+			flip = (-1) if (cardinal.values == 'W' or cardinal.values == 'S') else 1
+			return flip * (degrees + minutes/60 + seconds/3600)
+
+		with open(self.image,'rb') as g:
+			latitude = convert_to_decimal(self.tags['GPS GPSLatitude'],self.tags['GPS GPSLatitudeRef'])
+			longitude = convert_to_decimal(self.tags['GPS GPSLongitude'],self.tags['GPS GPSLongitudeRef'])
+			return (latitude, longitude)
+
+	def _standardize_num(self, value):
+		""" expects a either an integer or fraction, otherwise
+			raise TypeError; if fraction, divides it and returns floating point;
+			if integer, just return it as int -- done for minutes and altitude, which
+			are prone to appear in either way """
+
+		value = str(value)
+		match = re.match('(\d*)/(\d*)', value)
+		if match:
+			numer = float(match.group(1))
+			denom = float(match.group(2))
+			return numer/denom
+		match = re.match('\d*', value)
+		if match: 
+			return int(value)
+		# else, raise TypeError
+		raise TypeError('Unexpected format')
+
+	def _return_altitude(self):
+		""" read altitude, convert to feet --- some photos report
+			'GPS GPSAltitude' as a fraction, others as integer, 
+			so be able to handle appropriately """
+		pass
+		
+	def _return_date(self):
+		raw_date = self.tags['EXIF DateTimeOriginal']
+		year, month, day = str(raw_date).split(' ')[0].split(':')[:]
+		hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
+		date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
+		return (date)
+
 

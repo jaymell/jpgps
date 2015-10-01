@@ -34,7 +34,7 @@ google maps: 33 2.3577N,97 12.10327 W
 
 def usage():
 	print("\n\nUsage: %s <-p|-a|-i|-c|-d> <file name>\n" % sys.argv[0]) 
-	print("\t-p:\tprint tag names")
+	print("\t-p:\tprint GPS tags")
 	print("\t-a:\tprint ALL photo tags (with a couple exceptions)")
 	print("\t-i:\tis photo geo-tagged? If so, print file name and \"Yes\"")
 	print("\t-c:\tprint COORDINATES of photo")
@@ -53,12 +53,12 @@ else:
 		if o in ["-p", "--print"]:
 			fi=a
 			fi = jpgps.Jpgps(fi)
-			fi.print_tag_names()
+			fi.print_gps_tags()
 			sys.exit()	
 		if o in ["-a", "--all"]:
 			fi=a
 			fi = jpgps.Jpgps(fi)
-			fi.read_all_tags()
+			fi.print_all_tags()
 			sys.exit()
 		if o in ["-i", "--is_tagged"]:
 			fi=a
@@ -71,12 +71,12 @@ else:
 		if o in ["-c", "--cord"]:
 			fi=a
 			fi = jpgps.Jpgps(fi)
-			print(fi.return_coords())
+			print(fi.latitude, fi.longitude)
 			sys.exit()
 		if o in ["-d", "--date"]:
 			fi=a
 			fi = jpgps.Jpgps(fi)
-			print(fi.return_date())
+			print(fi.date)
 			sys.exit()
 		else:
 			usage()
