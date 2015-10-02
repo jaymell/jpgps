@@ -27,21 +27,13 @@ class Jpgps:
 		   ]
 
 	def __init__(self, fi):
+		self.image = fi
 		try:
-			with open(fi, 'rb') as f:
-				self.image = fi
+			with open(self.image, 'rb') as f:
 				self.tags = exifread.process_file(f)		
-				self.latitude = None
-				self.longitude = None
-				self.altitude = None
-				self.date = self._return_date()
-				if self.is_gps_tagged():
-					self.latitude, self.longitude = self._return_coords()	
-					self.altitude = self._return_altitude()
 		except Exception as e:
-			print('Failed to open file: %s: %s' % (fi,e))
+			print('Failed to open file: %s: %s' % (self.image,e))
 			
-
 	def __str__(self):
 		return self.image
 
@@ -58,11 +50,13 @@ class Jpgps:
 			print "Key: %s, value %s" % (tag, self.tags[tag])
 	
 	def print_all_tags(self):
+		""" well, all tags but 'JPEGThumbnail', 
+			'TIFFThumbnail', 'Filename', 'EXIF MakerNote' """
 		for tag in self.tags:
 			if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
 				print("Key: %s, value %s" % (tag, self.tags[tag]))
 
-	def _return_coords(self):
+	def coordinates(self):
 		""" strip out latitude, longitude info and return... data is stored
 			in degree/minute/second/cardinal direction format, convert to
 			+/- decimal degrees --- data type of dict values requires first
@@ -74,24 +68,59 @@ class Jpgps:
 				negative """
 			# degrees and minutes are integers:
 			degrees, minutes = [ float(str(i)) for i in data.values[:2] ]
+			# seconds may or may not be a ratio:
 			seconds = self._standardize_num(data.values[2])
-			"""
-			seconds_num, seconds_div = [ float(str(i)) for i in str(data.values[2]).split('/') ]
-			seconds = float(seconds_num/seconds_div)
-			"""
 			flip = (-1) if (cardinal.values == 'W' or cardinal.values == 'S') else 1
 			return flip * (degrees + minutes/60 + seconds/3600)
 
-		with open(self.image,'rb') as g:
+		if self.is_gps_tagged():
 			latitude = convert_to_decimal(self.tags['GPS GPSLatitude'],self.tags['GPS GPSLatitudeRef'])
 			longitude = convert_to_decimal(self.tags['GPS GPSLongitude'],self.tags['GPS GPSLongitudeRef'])
 			return (latitude, longitude)
+		else:
+			return (None, None)
+	def altitude(self, unit='feet'):
+		""" read altitude, convert to feet --- some photos report
+			'GPS GPSAltitude' as a fraction, others as integer, 
+			so be able to handle appropriately """
+
+		# set this to whatever you multiply meters by to get feet:
+		############ FIX THIS ####################
+		conversion = 69
+		############ FIX ABOVE ###################
+		if self.is_gps_tagged():
+			altitude_meters = self.tags['GPS GPSAltitude'].values
+			if self.tags['GPS GPSAltitudeRef']  == 0: 
+				flip = 1
+			elif self.tags['GPS GPSAltitudeRef'] == 1:	
+				flip = -1
+			else: 
+				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
+
+			if unit == 'feet':
+				return flip * ( altitude_meters * conversion)
+			elif unit == 'meters':
+				return flip * altitude_meters
+			else:
+				raise ValueError('Unexpected value for unit')
+		else:
+			return None
+		
+	def date(self):
+		""" parse date string, return datetime object --
+			may make more sense to use datetime.strftime
+			for this """
+		raw_date = self.tags['EXIF DateTimeOriginal']
+		year, month, day = str(raw_date).split(' ')[0].split(':')[:]
+		hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
+		date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
+		return (date)
 
 	def _standardize_num(self, value):
 		""" expects a either an integer or fraction, otherwise
 			raise TypeError; if fraction, divides it and returns floating point;
 			if integer, just return it as int -- done for minutes and altitude, which
-			are prone to appear in either way """
+			are prone to appear in either form """
 
 		value = str(value)
 		match = re.match('(\d*)/(\d*)', value)
@@ -99,23 +128,12 @@ class Jpgps:
 			numer = float(match.group(1))
 			denom = float(match.group(2))
 			return numer/denom
-		match = re.match('\d*', value)
-		if match: 
-			return int(value)
-		# else, raise TypeError
-		raise TypeError('Unexpected format')
+		else: 
+			match = re.match('\d*', value)
+			if match: 
+				return int(value)
+			else:
+				raise TypeError('Unexpected format')
 
-	def _return_altitude(self):
-		""" read altitude, convert to feet --- some photos report
-			'GPS GPSAltitude' as a fraction, others as integer, 
-			so be able to handle appropriately """
-		pass
-		
-	def _return_date(self):
-		raw_date = self.tags['EXIF DateTimeOriginal']
-		year, month, day = str(raw_date).split(' ')[0].split(':')[:]
-		hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
-		date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
-		return (date)
 
 
