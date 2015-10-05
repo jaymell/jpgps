@@ -85,9 +85,7 @@ class Jpgps:
 			so be able to handle appropriately """
 
 		# set this to whatever you multiply meters by to get feet:
-		############ FIX THIS ####################
-		conversion = 69
-		############ FIX ABOVE ###################
+		conversion = 3.28084
 		if self.is_gps_tagged():
 			altitude_meters = self.tags['GPS GPSAltitude'].values
 			if self.tags['GPS GPSAltitudeRef']  == 0: 
@@ -98,7 +96,7 @@ class Jpgps:
 				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
 
 			if unit == 'feet':
-				return flip * ( altitude_meters * conversion)
+				return round(flip * ( altitude_meters * conversion),0)
 			elif unit == 'meters':
 				return flip * altitude_meters
 			else:
