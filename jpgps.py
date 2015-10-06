@@ -88,12 +88,30 @@ class Jpgps:
 		conversion = 3.28084
 		if self.is_gps_tagged():
 			altitude_meters = self.tags['GPS GPSAltitude'].values
-			if self.tags['GPS GPSAltitudeRef']  == 0: 
+			# very specific type checking to make sure no unexpected 
+			# formats appears in data:
+			if type(altitude_meters) != list and len(altitude_meters) != 1:
+				raise ValueError('Unexpected value for GPS GPSAltitude')
+				return None
+			else:
+				altitude_meters = int(str(altitude_meters[0]))
+
+			altitude_ref = self.tags['GPS GPSAltitudeRef'].values
+			# very specific type checking to make sure no unexpected 
+			# formats appears in data:
+			if type(altitude_ref) != list and len(altitude_ref) != 1:
+                                raise ValueError('Unexpected value for GPS GPSAltitudeRef')
+                                return None
+                        else:
+                                altitude_ref = int(str(altitude_ref[0]))
+	
+			if altitude_ref == 0: 
 				flip = 1
-			elif self.tags['GPS GPSAltitudeRef'] == 1:	
+			elif altitude_ref == 1:	
 				flip = -1
 			else: 
 				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
+				return None
 
 			if unit == 'feet':
 				return round(flip * ( altitude_meters * conversion),0)
@@ -101,6 +119,7 @@ class Jpgps:
 				return flip * altitude_meters
 			else:
 				raise ValueError('Unexpected value for unit')
+				return None
 		else:
 			return None
 		
