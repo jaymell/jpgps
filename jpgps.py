@@ -18,14 +18,6 @@ class Jpgps:
 		it still may be useful to access some of the metadata, eg date,
 		even in absence of GPS data  -- use Jpgps.is_gps_tagged for checking """
 
-	gps_tags = [ 	'GPS GPSLongitude'	,
-			'GPS GPSLatitude'	,
-			'GPS GPSLatitudeRef'	,
-			'GPS GPSAltitudeRef'	,
-			'GPS GPSLongitudeRef'	,
-			'GPS GPSAltitude' 	,
-		   ]
-
 	def __init__(self, fi):
 		self.image = fi
 		try:
@@ -38,23 +30,40 @@ class Jpgps:
 		return self.image
 
 	def is_gps_tagged(self):
+		""" determines whether to consider image to be
+			gps-tagged or not -- there are other
+			GPS tags, however """
+
+		gps_tags = [ 	'GPS GPSLongitude'	,
+				'GPS GPSLatitude'	,
+				'GPS GPSLatitudeRef'	,
+				'GPS GPSAltitudeRef'	,
+				'GPS GPSLongitudeRef'	,
+				'GPS GPSAltitude' 	,
+			   ]
+
+
 		match=0
-		if all(k in self.tags for k in self.gps_tags):
+		if all(k in self.tags for k in gps_tags):
 			return True
 		else: 	
 			return False
 
-	def print_gps_tags(self):
-		for tag in self.tags.keys():
-		    if tag in self.gps_tags:
-			print "Key: %s, value %s" % (tag, self.tags[tag])
-	
-	def print_all_tags(self):
-		""" well, all tags but 'JPEGThumbnail', 
-			'TIFFThumbnail', 'Filename', 'EXIF MakerNote' """
-		for tag in self.tags:
-			if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
-				print("Key: %s, value %s" % (tag, self.tags[tag]))
+	def get_tags(self, verbose=0, stdout=False):
+		""" returns tags, by default GPS only, with
+			additional based on verbosity level """ 
+
+		thumbnail_tags = ['TIFFThumbnail', 'JPEGThumbnail']
+		if verbose >= 3:
+			selected = self.tags
+		elif verbose >= 2:
+			selected = { x: y for x,y in self.tags.items() if x not in thumbnail_tags }
+		elif verbose >= 1:
+			selected = { x: y for x,y in self.tags.items() if x.startswith('GPS') }
+
+		if stdout == True:
+			for key, value in selected.items(): print('%s: %s' % (key, value))
+		return selected
 
 	def coordinates(self):
 		""" strip out latitude, longitude info and return... data is stored
