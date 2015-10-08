@@ -20,12 +20,11 @@ class Jpgps:
 
 	def __init__(self, fi):
 		self.image = fi
-		try:
-			with open(self.image, 'rb') as f:
-				self.tags = exifread.process_file(f)		
-		except Exception as e:
-			print('Failed to open file: %s: %s' % (self.image,e))
-			
+		# this is likely to fail if passed a glob pattern --
+		# handle exception on the object creation side:
+		with open(self.image, 'rb') as f:
+			self.tags = exifread.process_file(f)		
+
 	def __str__(self):
 		return self.image
 
