@@ -127,11 +127,14 @@ class Jpgps:
 		""" parse date string, return datetime object --
 			may make more sense to use datetime.strftime
 			for this """
-		raw_date = self.tags['EXIF DateTimeOriginal']
-		year, month, day = str(raw_date).split(' ')[0].split(':')[:]
-		hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
-		date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
-		return (date)
+		if 'EXIF DateTimeOriginal' in self.tags:
+			raw_date = self.tags['EXIF DateTimeOriginal']
+			year, month, day = str(raw_date).split(' ')[0].split(':')[:]
+			hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
+			date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
+			return (date)
+		else:
+			return None
 
 	def _standardize_num(self, value):
 		""" expects a either an integer or fraction, otherwise
