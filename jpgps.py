@@ -140,7 +140,8 @@ class Jpgps:
 			year, month, day = str(raw_date).split(' ')[0].split(':')[:]
 			hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
 			date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
-			return (date)
+			# return formatted with no spaces for easier CLI parsing:
+			return date.strftime('%Y-%m-%d-%H:%M:%S')
 		else:
 			return None
 
