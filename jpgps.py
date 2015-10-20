@@ -19,11 +19,8 @@ class Jpgps:
 		even in absence of GPS data  -- use Jpgps.is_gps_tagged for checking """
 
 	def __init__(self, fi):
-		self.image = fi
-		# this is likely to fail if passed a glob pattern --
-		# handle exception on the object creation side:
-		with open(self.image, 'rb') as f:
-			self.tags = exifread.process_file(f)		
+		self.image = fi.name
+		self.tags = exifread.process_file(fi)		
 
 	def __str__(self):
 		return self.image

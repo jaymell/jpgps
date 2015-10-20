@@ -28,7 +28,8 @@ if not args.is_tagged:
 	print(header)
 	for i in args.file_list:
 		try:
-			fi = jpgps.Jpgps(i)
+			with open(i, 'rb') as f:
+				fi = jpgps.Jpgps(f)
 		except Exception as e:
 			print('Failed to open %s: %s' % (i, e))
 		else:
@@ -46,7 +47,8 @@ if not args.is_tagged:
 else:
 	for i in args.file_list:
                 try:
-                        fi = jpgps.Jpgps(i)
+                        with open(i, 'rb') as f:
+                                fi = jpgps.Jpgps(f)
                 except Exception as e:
                         print('Failed to open %s: %s' % (i, e))
                 else:
