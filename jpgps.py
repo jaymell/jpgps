@@ -137,9 +137,7 @@ class Jpgps:
 			raw_date = self.tags['EXIF DateTimeOriginal']
 			year, month, day = str(raw_date).split(' ')[0].split(':')[:]
 			hour, minute, second = str(raw_date).split(' ')[1].split(':')[:]
-			date = datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
-			# return formatted with no spaces for easier CLI parsing:
-			return date.strftime('%Y-%m-%d-%H:%M:%S')
+			return datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
 		else:
 			return None
 
@@ -155,6 +153,16 @@ class Jpgps:
 			except Exception as e: 
 				print('Unexpected value for dimensions: %s' % e)
 		return None
+
+	def as_dict(self):
+		return {'file_name': self.image,
+			'latitude': self.coordinates()[0],
+			'longitude': self.coordinates()[1],
+			'date': self.date().strftime('%Y-%m-%d %H:%M:%S'),
+			'width': self.dimensions()[0],
+			'height': self.dimensions()[1]
+			}
+			
 
 	def _standardize_num(self, value):
 		""" expects a either an integer or fraction, otherwise

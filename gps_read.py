@@ -40,7 +40,12 @@ if not args.is_tagged:
 			if args.altitude: 
 				result += "%s " % fi.altitude()
 			if args.date:
-				result += "%s " % fi.date()
+				# return formatted with no spaces for easier CLI parsing:
+				try:
+					result += "%s " % fi.date().strftime('%Y-%m-%d-%H:%M:%S')
+				except:
+					result += "None "
+					
 			if args.verbose:
 				fi.get_tags(verbose=args.verbose, stdout=True)
 			print(result)
