@@ -156,11 +156,11 @@ class Jpgps:
 
 	def as_dict(self):
 		return {'file_name': self.image,
-			'latitude': self.coordinates()[0],
-			'longitude': self.coordinates()[1],
-			'date': self.date().strftime('%Y-%m-%d %H:%M:%S'),
-			'width': self.dimensions()[0],
-			'height': self.dimensions()[1]
+			'latitude': self.coordinates()[0] if self.coordinates() else None,
+			'longitude': self.coordinates()[1] if self.coordinates() else None,
+			'date': self.date().strftime('%Y-%m-%d %H:%M:%S') if self.date() else None,
+			'width': self.dimensions()[0] if self.dimensions() else None,
+			'height': self.dimensions()[1] if self.dimensions() else None,
 			}
 			
 
