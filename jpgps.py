@@ -84,6 +84,7 @@ class Jpgps:
 			return (latitude, longitude)
 		else:
 			return (None, None)
+
 	def altitude(self, unit='feet'):
 		""" read altitude, convert to feet --- some photos report
 			'GPS GPSAltitude' as a fraction, others as integer, 
@@ -141,6 +142,19 @@ class Jpgps:
 			return date.strftime('%Y-%m-%d-%H:%M:%S')
 		else:
 			return None
+
+	def dimensions(self):
+		""" return width, height in pixels """
+
+		# very specific, but being overly cautious about expected type 
+		# in absence of extensive empirical testing:
+		if 'EXIF ExifImageWidth' and 'EXIF ExifImageLength' in self.tags:
+			try:
+				return (int(str(self.tags['EXIF ExifImageWidth'].values[0])), 
+					int(str(self.tags['EXIF ExifImageLength'].values[0])))
+			except Exception as e: 
+				print('Unexpected value for dimensions: %s' % e)
+		return None
 
 	def _standardize_num(self, value):
 		""" expects a either an integer or fraction, otherwise
