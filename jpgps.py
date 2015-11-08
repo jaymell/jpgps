@@ -166,6 +166,22 @@ class Jpgps:
 			else:
 				return int(str(orientation_raw[0]))
 
+	def rotation(self):
+		""" return number of degrees image is rotated """
+
+		oriented = self.orientation()
+		if oriented:
+			if (oriented == 3 or oriented == 4):
+				return 180
+			elif (oriented == 5 or oriented == 6):
+				return 270
+			elif (oriented == 7 or oriented == 8):
+				return 90
+			else:
+				return 0
+		else:
+			return None
+			
 	def as_dict(self):
 		return {'file_name': self.image,
 			'latitude': self.coordinates()[0] if self.coordinates() else None,
@@ -194,6 +210,3 @@ class Jpgps:
 				return int(value)
 			else:
 				raise TypeError('Unexpected format')
-
-
-

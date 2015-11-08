@@ -13,6 +13,7 @@ parser.add_argument("-i", "--is-tagged", action="store_true", default=False, hel
 parser.add_argument("-d", "--date", action="store_true", default=False, help="include photo date")
 parser.add_argument("-n", "--no-coords", action="store_true", default=False, help="don't print coordinates")
 parser.add_argument("-o", "--orientation", action="store_true", default=False, help="show orientation")
+parser.add_argument("-r", "--rotation", action="store_true", default=False, help="show rotation (degrees)")
 parser.add_argument("-m", "--dimensions", action="count", default=0)
 parser.add_argument("-v", "--verbose", action="count", default=0)
 parser.add_argument("file_list", nargs="+")
@@ -29,6 +30,8 @@ if not args.is_tagged:
 		header += "Date "
 	if args.orientation:
 		header += "Orientation "
+	if args.rotation:
+		header += "Rotation "
 	if args.dimensions:
 		header += "(Width, Height)"
 	print(header)
@@ -53,6 +56,8 @@ if not args.is_tagged:
 					result += "None "
 			if args.orientation: 
 				result += "%s " % fi.orientation()
+			if args.rotation: 
+				result += "%s " % fi.rotation()
 			if args.dimensions: 
 				result += "%s " % (fi.dimensions(),)
 			if args.verbose:
