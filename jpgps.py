@@ -106,10 +106,10 @@ class Jpgps:
 			# very specific type checking to make sure no unexpected 
 			# formats appears in data:
 			if type(altitude_ref) != list and len(altitude_ref) != 1:
-                                raise ValueError('Unexpected value for GPS GPSAltitudeRef')
-                                return None
+				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
+				return None
                         else:
-                                altitude_ref = int(str(altitude_ref[0]))
+				altitude_ref = int(str(altitude_ref[0]))
 	
 			if altitude_ref == 0: 
 				flip = 1
@@ -144,15 +144,27 @@ class Jpgps:
 	def dimensions(self):
 		""" return width, height in pixels """
 
-		# very specific, but being overly cautious about expected type 
-		# in absence of extensive empirical testing:
+		
 		if 'EXIF ExifImageWidth' and 'EXIF ExifImageLength' in self.tags:
 			try:
 				return (int(str(self.tags['EXIF ExifImageWidth'].values[0])), 
 					int(str(self.tags['EXIF ExifImageLength'].values[0])))
 			except Exception as e: 
-				print('Unexpected value for dimensions: %s' % e)
+				raise ValueError('Unexpected value for dimensions: %s' % e)
 		return None
+
+	def orientation(self):
+		""" return exif orientation data (photo rotation) """
+
+		if 'Image Orientation' in self.tags:
+			orientation_raw = self.tags['Image Orientation'].values
+			# very specific type checking to make sure no unexpected 
+			# formats appears in data:
+			if type(orientation_raw) != list and len(orientation_raw) != 1:
+				raise ValueError('Unexpected value for Image Orientation')
+				return None
+			else:
+				return int(str(orientation_raw[0]))
 
 	def as_dict(self):
 		return {'file_name': self.image,

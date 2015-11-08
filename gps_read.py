@@ -12,6 +12,8 @@ parser.add_argument("-a", "--altitude", action="store_true", default=False, help
 parser.add_argument("-i", "--is-tagged", action="store_true", default=False, help="only report whether photo is geo-tagged")
 parser.add_argument("-d", "--date", action="store_true", default=False, help="include photo date")
 parser.add_argument("-n", "--no-coords", action="store_true", default=False, help="don't print coordinates")
+parser.add_argument("-o", "--orientation", action="store_true", default=False, help="show orientation")
+parser.add_argument("-m", "--dimensions", action="count", default=0)
 parser.add_argument("-v", "--verbose", action="count", default=0)
 parser.add_argument("file_list", nargs="+")
 
@@ -25,6 +27,10 @@ if not args.is_tagged:
 		header += "Altitude "
 	if args.date:
 		header += "Date "
+	if args.orientation:
+		header += "Orientation "
+	if args.dimensions:
+		header += "(Width, Height)"
 	print(header)
 	for i in args.file_list:
 		try:
@@ -45,7 +51,10 @@ if not args.is_tagged:
 					result += "%s " % fi.date().strftime('%Y-%m-%d-%H:%M:%S')
 				except:
 					result += "None "
-					
+			if args.orientation: 
+				result += "%s " % fi.orientation()
+			if args.dimensions: 
+				result += "%s " % (fi.dimensions(),)
 			if args.verbose:
 				fi.get_tags(verbose=args.verbose, stdout=True)
 			print(result)
