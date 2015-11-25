@@ -93,31 +93,15 @@ class Jpgps:
 		# set this to whatever you multiply meters by to get feet:
 		conversion = 3.28084
 		if self.is_gps_tagged():
-			altitude_meters = self.tags['GPS GPSAltitude'].values
-			# very specific type checking to make sure no unexpected 
-			# formats appears in data:
-			if type(altitude_meters) != list and len(altitude_meters) != 1:
-				raise ValueError('Unexpected value for GPS GPSAltitude')
-				return None
-			else:
-				altitude_meters = int(str(altitude_meters[0]))
-
-			altitude_ref = self.tags['GPS GPSAltitudeRef'].values
-			# very specific type checking to make sure no unexpected 
-			# formats appears in data:
-			if type(altitude_ref) != list and len(altitude_ref) != 1:
-				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
-				return None
-                        else:
-				altitude_ref = int(str(altitude_ref[0]))
-	
+			altitude_meters = int(self.tags['GPS GPSAltitude'].printable)
+			altitude_ref = int(self.tags['GPS GPSAltitudeRef'].printable)
 			if altitude_ref == 0: 
 				flip = 1
 			elif altitude_ref == 1:	
 				flip = -1
 			else: 
+				# overly cautious type checking:
 				raise ValueError('Unexpected value for GPS GPSAltitudeRef')
-				return None
 
 			if unit == 'feet':
 				return round(flip * ( altitude_meters * conversion),0)
@@ -125,7 +109,6 @@ class Jpgps:
 				return flip * altitude_meters
 			else:
 				raise ValueError('Unexpected value for unit')
-				return None
 		else:
 			return None
 		
@@ -147,9 +130,10 @@ class Jpgps:
 		
 		if 'EXIF ExifImageWidth' and 'EXIF ExifImageLength' in self.tags:
 			try:
-				return (int(str(self.tags['EXIF ExifImageWidth'].values[0])), 
-					int(str(self.tags['EXIF ExifImageLength'].values[0])))
-			except Exception as e: 
+				# tuple:
+				return (int(self.tags['EXIF ExifImageWidth'].printable), 
+					int(self.tags['EXIF ExifImageLength'].printable))
+			except Exception as e:
 				raise ValueError('Unexpected value for dimensions: %s' % e)
 		return None
 
